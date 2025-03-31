@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace dotnet_lab2_cli
 {
@@ -17,6 +18,7 @@ namespace dotnet_lab2_cli
     internal class RecentTracks
     {
         public List<Track> track { get; set; }
+        [JsonPropertyName("@attr")]
         public Attr attr { get; set; }
     }
     internal class Track
@@ -28,7 +30,8 @@ namespace dotnet_lab2_cli
         public string mbid { get; set; }
         public Album album { get; set; }
         public string name { get; set; }
-        public string? nowplaying { get; set; }
+        [JsonPropertyName("@attr")]
+        public Attr? attr { get; set; }
         public string url { get; set; }
         public Date? date { get; set; }
 
@@ -36,7 +39,7 @@ namespace dotnet_lab2_cli
 
         public override string ToString()
         {
-            if (date == null)
+            if (date == null && attr.nowplaying == "true" )
             {
                 return $"{artist.text} - {name} ({album.text}) @ now playing";
             } else
@@ -97,5 +100,13 @@ namespace dotnet_lab2_cli
         public string page { get; set; }
         public string perPage { get; set; }
         public string total { get; set; }
+
+        public string? nowplaying { get; set; }
+
+        public override string ToString()
+        {
+            string rv = $"User: {user}, Total Pages: {totalPages}, Page: {page}, Per Page: {perPage}, Total: {total}";
+            return rv;
+        }
     }
 }

@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 
 namespace dotnet_lab2_cli
@@ -13,8 +15,17 @@ namespace dotnet_lab2_cli
     {
         string ApiKey = "039b74b22e1ed85f28229cae448df8f7";
         public HttpClient client;
-        public async Task GetRecentTracks()
+        List<Track> AllTracks = new List<Track>();
+
+        public async Task GetRecentTracks(string User, long From, long To)
         {
+            // sprawdz czy data jest w bazie danych, jesli jest - zakoncz funkcje
+            if (await IsDateInDatabase((From+To)/2))
+            {
+                Console.WriteLine("Data already in database.");
+                return;
+            }
+
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -23,25 +34,122 @@ namespace dotnet_lab2_cli
             client = new HttpClient();
             string RootURL = "http://ws.audioscrobbler.com/2.0/";
             string Method = "?method=user.getrecenttracks";
-            string Username = "czupirrek";
-            string CallURL = RootURL + Method + "&user=" + Username + "&api_key=" + ApiKey + "&format=json";
-            string response = await client.GetStringAsync(CallURL);
-            Console.WriteLine(response);
+            string Username = User;
+            int Page = 1;
+            int AllPages = 999;
+            bool HasMorePages = true;
 
-
-            RecentTracksRoot ApiResponse = JsonSerializer.Deserialize<RecentTracksRoot>(response);
-
-
-            foreach (Track track in ApiResponse.recenttracks.track)
+            while (HasMorePages)
             {
-                //string r = "track name: " +  track.name + "\t by artist: " + track.artist.text + "\t from album: " + track.album.text + "\t at time: " + track.date.text;
-                Console.WriteLine(track);
-                //Console.WriteLine(track);
+                string CallURL = $"{RootURL}{Method}&user={User}&api_key={ApiKey}&format=json&from={From}&to={To}&page={Page}";
+                string JsonApiResponse = await client.GetStringAsync(CallURL);
+                Console.WriteLine(JsonApiResponse);
+                RecentTracksRoot StructuredApiResponse = JsonSerializer.Deserialize<RecentTracksRoot>(JsonApiResponse);
+                AllPages = int.Parse(StructuredApiResponse.recenttracks.attr.totalPages);
+                Console.WriteLine(StructuredApiResponse.recenttracks.attr);
+
+                AllTracks.AddRange(StructuredApiResponse.recenttracks.track);
+
+                if (Page >= AllPages)
+                {
+                    HasMorePages = false;
+                }
+
+                Page++;
             }
 
-            //Console.WriteLine("moze cos sie stalo");
+            // Tracki z atrybutem nowplaying są zwracane ZAWSZE, nawet jesli okreslono inny zakres dat.
+            // Aby uniknąć nieporozumień, usuwam je z listy.
+            AllTracks.RemoveAll(track => track.attr?.nowplaying == "true");
+
+            int counter = 0;
+
+            foreach (Track track in AllTracks)
+            {
+                counter++;
+                Console.WriteLine(track);
+            }
+            Console.WriteLine("Total tracks: " + counter);
+            await SaveTracksToDatabase(AllTracks);
+        }
+    
+
+
+  
+
+    private async Task SaveTracksToDatabase(List<Track> tracks)
+        {
+            using (var context = new LastfmContext())
+            {
+                foreach (var track in tracks)
+                {
+                    var dbTrack = new DbTrack
+                    {
+                        ArtistName = track.artist.text,
+                        TrackName = track.name,
+                        Album = track.album.text,
+                        Date = track.date?.text,
+                        AlbumMbid = track.album.mbid
+                    };
+
+                    // Sprawdź, czy artysta już istnieje w bazie danych
+                    var dbArtist = await context.Artists.FirstOrDefaultAsync(a => a.ArtistName == track.artist.text);
+                    if (dbArtist == null)
+                    {
+                        dbArtist = new DbArtist
+                        {
+                            ArtistName = track.artist.text,
+                            ImageUrl = track.image.FirstOrDefault()?.text
+                        };
+                        context.Artists.Add(dbArtist);
+                        await context.SaveChangesAsync();
+                    }
+
+                    dbTrack.ArtistId = dbArtist.Id;
+                    context.Tracks.Add(dbTrack);
+                }
+
+                await context.SaveChangesAsync();
+            }
+        }
+
+        private async Task<bool> IsDateInDatabase(long timestamp)
+        {
+            using (var context = new LastfmContext())
+            {
+                var date = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime.Date;
+
+                var tracks = await context.Tracks
+                    .Where(t => t.Date != null && t.Date != "") // Filtr pustych wartości
+                    .ToListAsync(); // Pobierz listę asynchronicznie
+
+                return tracks.Any(t => DateTime.TryParseExact(
+                    t.Date,
+                    "dd MMM yyyy, HH:mm", // Dopasowanie do twojego formatu
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var parsedDate) && parsedDate.Date == date);
+            }
+        }
+
+
+
+
+        public void GetRecentTracksByDay(string User, int Year, int Month, int Day)
+        {
+            DateTime From = new DateTime(Year, Month, Day, 0, 0, 0, DateTimeKind.Utc);
+            DateTime To = new DateTime(Year, Month, Day, 23, 59, 59, DateTimeKind.Utc);
+            long FromUnix = ((DateTimeOffset)From).ToUnixTimeSeconds();
+            long ToUnix = ((DateTimeOffset)To).ToUnixTimeSeconds();
+
+            GetRecentTracks(User, FromUnix, ToUnix).Wait();
         }
     }
 
-  
+
+    
+
 }
+    
+
+
