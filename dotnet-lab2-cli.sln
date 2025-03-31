@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156 d17.13
+VisualStudioVersion = 17.13.35825.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-lab2-cli", "dotnet-lab2-cli\dotnet-lab2-cli.csproj", "{5445DFD8-F98D-4D95-BA1A-B3118999939F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui-lastfm", "Maui-lastfm\Maui-lastfm\Maui-lastfm.csproj", "{031FE908-7604-485C-8469-F7AF34AB3581}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui-lastfm.WinUI", "Maui-lastfm\Maui-lastfm.WinUI\Maui-lastfm.WinUI.csproj", "{4122A81A-0DBF-4D93-8530-44F3CA14CF79}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,16 @@ Global
 		{5445DFD8-F98D-4D95-BA1A-B3118999939F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5445DFD8-F98D-4D95-BA1A-B3118999939F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5445DFD8-F98D-4D95-BA1A-B3118999939F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{031FE908-7604-485C-8469-F7AF34AB3581}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{031FE908-7604-485C-8469-F7AF34AB3581}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{031FE908-7604-485C-8469-F7AF34AB3581}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{031FE908-7604-485C-8469-F7AF34AB3581}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4122A81A-0DBF-4D93-8530-44F3CA14CF79}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{4122A81A-0DBF-4D93-8530-44F3CA14CF79}.Debug|Any CPU.Build.0 = Debug|x64
+		{4122A81A-0DBF-4D93-8530-44F3CA14CF79}.Debug|Any CPU.Deploy.0 = Debug|x64
+		{4122A81A-0DBF-4D93-8530-44F3CA14CF79}.Release|Any CPU.ActiveCfg = Release|x64
+		{4122A81A-0DBF-4D93-8530-44F3CA14CF79}.Release|Any CPU.Build.0 = Release|x64
+		{4122A81A-0DBF-4D93-8530-44F3CA14CF79}.Release|Any CPU.Deploy.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

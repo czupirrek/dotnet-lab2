@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Maui_lastfm.MainPage"
+             xmlns:local="clr-namespace:dotnet_lab2_cli">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+
+
+            <Label
+                x:Name="LabelUsername"
+                Text="Enter your username"
+                           />
+
+
+            <Entry
+                x:Name="TextEntry"
+                Placeholder="Enter your username here"
+                TextChanged="OnTextEntered"
+                SemanticProperties.Description="Pole na wpisanie tekstu"
+                HorizontalOptions="Fill" />
+
+
+
+            <DatePicker
+                x:Name="DatePickerFrom"
+                DateSelected="OnDateSelectedFrom"
+                MinimumDate="2000-01-01"
+                MaximumDate="2026-01-01" />
+
+
+            <DatePicker
+                x:Name="DatePickerTo"
+                DateSelected="OnDateSelectedTo"
+                MinimumDate="2000-01-01"
+                MaximumDate="2026-01-01" />
+            
+            <Button
+                Text="Confirm selection!"
+                Clicked="OnDataEntered"
+                SemanticProperties.Description="Przycisk do wyszukiwania" />
+
+            <Label
+                x:Name="DatesToFrom"
+                Text="Select time span..."
+                           />
+            <Button
+                Text="Run!"
+                Clicked="OnDataConfirmed"
+                SemanticProperties.Description="Przycisk do wyszukiwania" />
+
+
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

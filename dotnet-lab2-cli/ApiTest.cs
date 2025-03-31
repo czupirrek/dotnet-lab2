@@ -11,7 +11,7 @@ using System.Globalization;
 
 namespace dotnet_lab2_cli
 {
-    class ApiTest
+    public class ApiTest
     {
         string ApiKey = "039b74b22e1ed85f28229cae448df8f7";
         public HttpClient client;
@@ -135,14 +135,32 @@ namespace dotnet_lab2_cli
 
 
 
-        public void GetRecentTracksByDay(string User, int Year, int Month, int Day)
+        public async Task GetRecentTracksByDay(string User, int Year, int Month, int Day)
         {
             DateTime From = new DateTime(Year, Month, Day, 0, 0, 0, DateTimeKind.Utc);
             DateTime To = new DateTime(Year, Month, Day, 23, 59, 59, DateTimeKind.Utc);
             long FromUnix = ((DateTimeOffset)From).ToUnixTimeSeconds();
             long ToUnix = ((DateTimeOffset)To).ToUnixTimeSeconds();
 
-            GetRecentTracks(User, FromUnix, ToUnix).Wait();
+            await GetRecentTracks(User, FromUnix, ToUnix);
+        }
+
+        public async Task GetRecentTracksByDateSpan(string User, DateTime From, DateTime To)
+        {
+            int Year, Month, Day;
+            DateTime currentDate = From;
+
+            while (currentDate <= To)
+            {
+                Year = currentDate.Year;
+                Month = currentDate.Month;
+                Day = currentDate.Day;
+
+
+                await GetRecentTracksByDay(User, Year, Month, Day);
+
+                currentDate = currentDate.AddDays(1);
+            }
         }
     }
 
