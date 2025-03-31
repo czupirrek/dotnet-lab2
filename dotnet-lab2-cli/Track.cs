@@ -21,21 +21,26 @@ namespace dotnet_lab2_cli
     }
     internal class Track
     {
-       
+        
         public Artist artist { get; set; }
         public string streamable { get; set; }
         public List<Image> image { get; set; }
         public string mbid { get; set; }
         public Album album { get; set; }
         public string name { get; set; }
+        public string? nowplaying { get; set; }
         public string url { get; set; }
-        public Date date { get; set; }
+        public Date? date { get; set; }
 
         //public string Timestamp { get; set; }
 
         public override string ToString()
         {
-            return $"{artist.text} - {name} ({album.text}) @ {date.text}";
+            if (date == null)
+            {
+                return $"{artist.text} - {name} ({album.text}) @ now playing";
+            } else
+                return $"{artist.text} - {name} ({album.text}) @ {date.text}";
         }
 
         }
@@ -75,7 +80,8 @@ namespace dotnet_lab2_cli
 
     internal class Date
     {
-        public string tts { get; set; }
+        public string uts { get; set; }
+
         [JsonPropertyName("#text")]
         public string text { get; set; }
         public override string ToString()

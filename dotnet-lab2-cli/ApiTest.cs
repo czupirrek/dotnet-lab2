@@ -29,13 +29,14 @@ namespace dotnet_lab2_cli
             Console.WriteLine(response);
 
 
-            RecentTracksRoot ApiResponse = JsonSerializer.Deserialize<RecentTracksRoot>(response, options);
+            RecentTracksRoot ApiResponse = JsonSerializer.Deserialize<RecentTracksRoot>(response);
 
 
             foreach (Track track in ApiResponse.recenttracks.track)
             {
-                string r = "track name: " +  track.name + "\t by artist: " + track.artist.text + "\t from album: " + track.album.text + "\t at time: " + track.date.text;
-                Console.WriteLine(r);
+                //string r = "track name: " +  track.name + "\t by artist: " + track.artist.text + "\t from album: " + track.album.text + "\t at time: " + track.date.text;
+                Console.WriteLine(track);
+                //Console.WriteLine(track);
             }
 
             //Console.WriteLine("moze cos sie stalo");
