@@ -9,6 +9,19 @@
             Padding="30,0"
             Spacing="25">
 
+            <CollectionView x:Name="ImageCollectionView" ItemsLayout="HorizontalList">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Image Source="{Binding ImageUrl}" WidthRequest="150" HeightRequest="150"/>
+                            <Label Text="{Binding Text, Mode=TwoWay}" FontSize="14" TextColor="Black" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+
+
 
             <Label
                 x:Name="LabelUsername"

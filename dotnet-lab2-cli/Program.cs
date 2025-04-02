@@ -12,7 +12,7 @@
             //apiTest.GetRecentTracksByDay("czupirrek", 2021, 10, 12);
 
             DateTime From = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            DateTime To = new DateTime(2025, 1, 5, 23, 59, 59, DateTimeKind.Utc);
+            DateTime To = new DateTime(2025, 1, 10, 23, 59, 59, DateTimeKind.Utc);
 
             apiTest.GetRecentTracksByDateSpan("czupirrek", From, To).Wait();
 
@@ -25,7 +25,7 @@
             Console.WriteLine($"Top {n} artists:");
             foreach (var artist in TopArtists.Result)
             {
-                Console.WriteLine($"{artist.Key}. {artist.Value}");
+                Console.WriteLine($"{artist.Item1}. {artist.Item2}. {artist.Item3}");
             }
 
             Console.WriteLine($"Top {n} albums:");
@@ -33,6 +33,7 @@
             {
                 Console.WriteLine($"{album.Item1} {album.Item2} {album.Item3}");
             }
+
 
 
 

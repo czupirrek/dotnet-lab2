@@ -26,6 +26,9 @@ namespace dotnet_lab2_cli
         public int ArtistId { get; set; }
         public DbArtist Artist { get; set; }
 
+        public int? AlbumId { get; set; }
+        public DbAlbum DbAlbum { get; set; }
+
     }
 
     public class DbAlbum
@@ -37,6 +40,7 @@ namespace dotnet_lab2_cli
         public string AlbumMbid { get; set; }
         public string ImageUrl { get; set; }
 
+        public List <DbTrack> Tracks { get; set; }
     }
 
     public class DbArtist
@@ -65,6 +69,13 @@ namespace dotnet_lab2_cli
                 .HasOne(t => t.Artist)
                 .WithMany(a => a.Tracks)
                 .HasForeignKey(t => t.ArtistId);
+
+            modelBuilder.Entity<DbTrack>()
+                .HasOne(t => t.DbAlbum)
+                .WithMany(a => a.Tracks)
+                .HasForeignKey(t => t.AlbumId)
+                .IsRequired(false); 
+
         }
     }
 

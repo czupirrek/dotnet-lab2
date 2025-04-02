@@ -7,6 +7,7 @@ using static System.Net.WebRequestMethods;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Security.Cryptography;
 
 
 namespace dotnet_lab2_cli
@@ -68,12 +69,12 @@ namespace dotnet_lab2_cli
             Console.WriteLine($"alltracks size: {AllTracks.Count}");
             await SaveTracksToDatabase(AllTracks);
         }
-    
 
 
-  
 
-    private async Task SaveTracksToDatabase(List<Track> tracks)
+
+
+        private async Task SaveTracksToDatabase(List<Track> tracks)
         {
             using (var context = new LastfmContext())
             {
@@ -88,6 +89,39 @@ namespace dotnet_lab2_cli
                             timestamp = parsedTimestamp;
                         }
                     }
+
+                    // Sprawdź, czy artysta już istnieje w bazie danych
+                    var dbArtist = await context.Artists.FirstOrDefaultAsync(a => a.ArtistName == track.artist.text);
+                    if (dbArtist == null)
+                    {
+                        dbArtist = new DbArtist
+                        {
+                            ArtistName = track.artist.text,
+                            ImageUrl = track.image?[3].text // [3] - indeks obrazka w najwiekszym rozmiarze
+                        };
+                        context.Artists.Add(dbArtist);
+                        await context.SaveChangesAsync();
+                    }
+
+                    // Sprawdź, czy album już istnieje w bazie danych
+                    var dbAlbum = await context.Albums.FirstOrDefaultAsync(a =>
+                        a.AlbumName == track.album.text &&
+                        a.Artist == track.artist.text);
+
+                    if (dbAlbum == null)
+                    {
+                        // Jeśli album nie istnieje, utwórz nowy
+                        dbAlbum = new DbAlbum
+                        {
+                            AlbumName = track.album.text,
+                            Artist = track.artist.text,
+                            AlbumMbid = track.album.mbid,
+                            ImageUrl = track.image?[3].text, // Największy dostępny rozmiar obrazka
+                        };
+                        context.Albums.Add(dbAlbum);
+                        await context.SaveChangesAsync();
+                    }
+
                     var dbTrack = new DbTrack
                     {
                         ArtistName = track.artist.text,
@@ -95,29 +129,18 @@ namespace dotnet_lab2_cli
                         Album = track.album.text,
                         Date = track.date?.text,
                         Timestamp = timestamp,
-                        AlbumMbid = track.album.mbid
+                        AlbumMbid = track.album.mbid,
+                        ArtistId = dbArtist.Id,
+                        AlbumId = dbAlbum.Id  // Ustawienie relacji z albumem
                     };
 
-                    // Artysta jest dodawany do BD tylko jeśli go tam jeszcze nie ma
-                    var dbArtist = await context.Artists.FirstOrDefaultAsync(a => a.ArtistName == track.artist.text);
-                    if (dbArtist == null)
-                    {
-                        dbArtist = new DbArtist
-                        {
-                            ArtistName = track.artist.text,
-                            ImageUrl = track.image?[2].text // [2] - indeks obrazka w rozmiarze large
-                        };
-                        context.Artists.Add(dbArtist);
-                        await context.SaveChangesAsync();
-                    }
-
-                    dbTrack.ArtistId = dbArtist.Id;
                     context.Tracks.Add(dbTrack);
                 }
 
                 await context.SaveChangesAsync();
             }
         }
+
 
         private async Task<bool> IsDateInDatabase(long timestamp)
         {
@@ -185,7 +208,7 @@ namespace dotnet_lab2_cli
     
 
         // Funkcja zwraca listę najczęściej odtwarzanych artystów obecnych w >>zakresie dat<< w bazie danych
-        public async Task<List<KeyValuePair<int, string>>> GetTopArtists(int Limit, DateTime From, DateTime To)
+        public async Task<List<Tuple<int, string, string>>> GetTopArtists(int Limit, DateTime From, DateTime To)
         {
             long FromUnix = ((DateTimeOffset)From).ToUnixTimeSeconds();
             long ToUnix = ((DateTimeOffset)To).ToUnixTimeSeconds();
@@ -197,9 +220,14 @@ namespace dotnet_lab2_cli
                     .GroupBy(t => t.ArtistName)
                     .OrderByDescending(g => g.Count())
                     .Take(Limit)
-                    .Select(g => new KeyValuePair<int, string>(g.Count(), g.Key))
+                    .Select(g => new
+                    {
+                        Count = g.Count(),
+                        ArtistName = g.Key,
+                        ImageUrl = g.First().Artist.ImageUrl
+                    })
                     .ToListAsync();
-                return topArtists;
+                return topArtists.Select(a => new Tuple<int, string, string>(a.Count, a.ArtistName, a.ImageUrl)).ToList();
 
             }
         }
@@ -215,9 +243,57 @@ namespace dotnet_lab2_cli
                     .GroupBy(t => t.Album)
                     .OrderByDescending(g => g.Count())
                     .Take(Limit)
-                    .Select(g => new Tuple<int, string, string>(g.Count(), g.Key, g.First().ArtistName))
+                    .Select(g => new
+                    {
+                        Count = g.Count(),
+                        AlbumName = g.Key,
+                        ImageUrl = g.First().DbAlbum.ImageUrl
+                    })
                     .ToListAsync();
-                return topAlbums;
+                return topAlbums.Select(a => new Tuple<int, string, string>(a.Count, a.AlbumName, a.ImageUrl)).ToList();
+            }
+        }
+
+        // to sie okazalo totalnie niepotrzebne bo maui moze pobierac obrazki z url ....
+        public async Task<List<KeyValuePair<string, string>>> DownloadAlbumCovers(List<Tuple<int, string, string>> TopAlbums)
+        {
+            string BasePath = "C:\\Users\\czupi\\source\\repos\\dotnet-lab2-cli\\Maui-lastfm\\Maui-lastfm\\Resources\\Images";
+            List<KeyValuePair<string, string>> AlbumPath = new List<KeyValuePair<string, string>>();
+            foreach (var album in TopAlbums)
+            {
+                string OutFilename = MD5String(album.Item2 + album.Item3) + ".png";
+                string FullPath = System.IO.Path.Combine(BasePath, OutFilename);
+                if (!System.IO.File.Exists(FullPath))
+                {
+                    string Url = album.Item3;
+
+                    Console.WriteLine($"Pobieram {Url} to {FullPath}");
+                    using (HttpClient client = new HttpClient())
+                    {
+                        byte[] fileBytes = await client.GetByteArrayAsync(Url);
+                        await System.IO.File.WriteAllBytesAsync(FullPath, fileBytes);
+                    }
+                }
+
+                AlbumPath.Add(new KeyValuePair<string, string>(album.Item2, FullPath));
+            }
+            return AlbumPath;
+        }
+
+
+
+        private string MD5String(string input)
+        {
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                return sb.ToString();
             }
         }
 
