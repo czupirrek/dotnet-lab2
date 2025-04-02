@@ -8,6 +8,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Reflection.Emit;
 
 
 namespace dotnet_lab2_cli
@@ -55,7 +56,7 @@ namespace dotnet_lab2_cli
             }
 
             // Tracki z atrybutem nowplaying są zwracane ZAWSZE, nawet jesli okreslono inny zakres dat.
-            // Aby uniknąć nieporozumień, usuwam je z listy.
+            // Aby uniknąć nieporozumień i fałszywych rekordów, usuwam je z listy.
             AllTracks.RemoveAll(track => track.attr?.nowplaying == "true");
 
             int counter = 0;
@@ -83,40 +84,39 @@ namespace dotnet_lab2_cli
                     long timestamp = 0;
                     if (track.date?.uts != null)
                     {
-                        // Konwersja string na long
+                        // konwersja timestampa z stringa na long
                         if (long.TryParse(track.date.uts, out var parsedTimestamp))
                         {
                             timestamp = parsedTimestamp;
                         }
                     }
 
-                    // Sprawdź, czy artysta już istnieje w bazie danych
+                    // sprawdzenie czy artysta jest już w DB i utworzenie nowego jesli nie
                     var dbArtist = await context.Artists.FirstOrDefaultAsync(a => a.ArtistName == track.artist.text);
                     if (dbArtist == null)
                     {
                         dbArtist = new DbArtist
                         {
                             ArtistName = track.artist.text,
-                            ImageUrl = track.image?[3].text // [3] - indeks obrazka w najwiekszym rozmiarze
+                            ImageUrl = track.image?[3].text // [3] - indeks obrazka w najwiekszym rozmiarze (to ogólnie nie ma sensu bo przypisuje artyście obrazek z utworu ale musiałbym kolejnego calla do api robić żeby to uzupełnić prawidłowymi danymi)
                         };
                         context.Artists.Add(dbArtist);
                         await context.SaveChangesAsync();
                     }
 
-                    // Sprawdź, czy album już istnieje w bazie danych
+                    // sprawdzenie czy album jest już w DB i utworzenie nowego jesli nie
                     var dbAlbum = await context.Albums.FirstOrDefaultAsync(a =>
                         a.AlbumName == track.album.text &&
                         a.Artist == track.artist.text);
 
                     if (dbAlbum == null)
                     {
-                        // Jeśli album nie istnieje, utwórz nowy
                         dbAlbum = new DbAlbum
                         {
                             AlbumName = track.album.text,
                             Artist = track.artist.text,
                             AlbumMbid = track.album.mbid,
-                            ImageUrl = track.image?[3].text, // Największy dostępny rozmiar obrazka
+                            ImageUrl = track.image?[3].text, // [3] - duzy obrazek
                         };
                         context.Albums.Add(dbAlbum);
                         await context.SaveChangesAsync();
@@ -131,7 +131,7 @@ namespace dotnet_lab2_cli
                         Timestamp = timestamp,
                         AlbumMbid = track.album.mbid,
                         ArtistId = dbArtist.Id,
-                        AlbumId = dbAlbum.Id  // Ustawienie relacji z albumem
+                        AlbumId = dbAlbum.Id  // relacja z albumem
                     };
 
                     context.Tracks.Add(dbTrack);
@@ -147,13 +147,13 @@ namespace dotnet_lab2_cli
             using (var context = new LastfmContext())
             {
                 var date = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime.Date;
-                // Oblicz timestamp początku i końca dnia
+                // obliczenie timestampa poczatku i konca dnia
                 long startOfDayTimestamp = ((DateTimeOffset)date).ToUnixTimeSeconds();
                 long endOfDayTimestamp = ((DateTimeOffset)date.AddDays(1).AddSeconds(-1)).ToUnixTimeSeconds();
 
                 Console.WriteLine($"Sprawdzam czy data {date:dd MMM yyyy} jest już w bazie danych...");
 
-                // Przeszukaj bazę danych używając pola Timestamp
+                // przesukiwanie DB używając pola track.Timestamp
                 var tracksFromDate = await context.Tracks
                     .Where(t => t.Timestamp >= startOfDayTimestamp && t.Timestamp <= endOfDayTimestamp)
                     .FirstOrDefaultAsync();
@@ -188,26 +188,26 @@ namespace dotnet_lab2_cli
                 await GetRecentTracks(User, FromUnix, ToUnix);
         }
 
-        public async Task GetRecentTracksByDateSpan(string User, DateTime From, DateTime To)
-        {
-            int Year, Month, Day;
-            DateTime currentDate = From;
+        //public async Task GetRecentTracksByDateSpan(string User, DateTime From, DateTime To)
+        //{
+        //    int Year, Month, Day;
+        //    DateTime currentDate = From;
 
-            while (currentDate <= To)
-            {
-                Year = currentDate.Year;
-                Month = currentDate.Month;
-                Day = currentDate.Day;
+        //    while (currentDate <= To)
+        //    {
+        //        Year = currentDate.Year;
+        //        Month = currentDate.Month;
+        //        Day = currentDate.Day;
 
 
-                await GetRecentTracksByDay(User, Year, Month, Day);
+        //        await GetRecentTracksByDay(User, Year, Month, Day);
 
-                currentDate = currentDate.AddDays(1);
-            }
-        }
-    
+        //        currentDate = currentDate.AddDays(1);
+        //    }
+        //}
 
-        // Funkcja zwraca listę najczęściej odtwarzanych artystów obecnych w >>zakresie dat<< w bazie danych
+
+        // funkcja zwraca listę najczęściej odtwarzanych artystów obecnych w >>zakresie dat<< w bazie danych
         public async Task<List<Tuple<int, string, string>>> GetTopArtists(int Limit, DateTime From, DateTime To)
         {
             long FromUnix = ((DateTimeOffset)From).ToUnixTimeSeconds();
@@ -232,6 +232,7 @@ namespace dotnet_lab2_cli
             }
         }
 
+        // funkcja zwraca listę najczęściej odtwarzanych albumów obecnych w >>zakresie dat<< w bazie danych
         public async Task<List<Tuple<int, string, string>>> GetTopAlbums(int Limit, DateTime From, DateTime To)
         {
             long FromUnix = ((DateTimeOffset)From).ToUnixTimeSeconds();

@@ -14,7 +14,7 @@
             DateTime From = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime To = new DateTime(2025, 1, 10, 23, 59, 59, DateTimeKind.Utc);
 
-            apiTest.GetRecentTracksByDateSpan("czupirrek", From, To).Wait();
+            //apiTest.GetRecentTracksByDateSpan("czupirrek", From, To).Wait();
 
             int n = 10;
 

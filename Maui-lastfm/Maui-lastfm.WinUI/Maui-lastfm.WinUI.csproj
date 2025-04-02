@@ -16,10 +16,11 @@
 		<UseMaui>true</UseMaui>
 		<!-- We do not want XAML files to be processed as .NET MAUI XAML, but rather WinUI XAML. -->
 		<EnableDefaultMauiItems>false</EnableDefaultMauiItems>
+		<DefaultLanguage>pl-PL</DefaultLanguage>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
