@@ -44,6 +44,7 @@ namespace Maui_lastfm
             LabelUsername.Text = "running...";
 
             await Api.GetRecentTracksByDateSpan(User, From, To);
+
             LabelUsername.Text = "DONE...";
 
 

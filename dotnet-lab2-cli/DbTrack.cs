@@ -18,7 +18,9 @@ namespace dotnet_lab2_cli
         public string ArtistName { get; set; }
         public string TrackName { get; set; }
         public string Album { get; set; }
-        public string Date { get; set; }
+        public string? Date { get; set; }
+        public long Timestamp { get; set; }
+
         public string AlbumMbid { get; set;}
 
         public int ArtistId { get; set; }

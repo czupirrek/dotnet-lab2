@@ -66,6 +66,7 @@ namespace dotnet_lab2_cli.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Date = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Timestamp = table.Column<long>(type: "bigint", nullable: false),
                     AlbumMbid = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ArtistId = table.Column<int>(type: "int", nullable: false)

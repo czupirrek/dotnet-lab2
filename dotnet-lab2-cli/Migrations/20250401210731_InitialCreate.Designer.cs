@@ -11,7 +11,7 @@ using dotnet_lab2_cli;
 namespace dotnet_lab2_cli.Migrations
 {
     [DbContext(typeof(LastfmContext))]
-    [Migration("20250331183316_InitialCreate")]
+    [Migration("20250401210731_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -100,6 +100,9 @@ namespace dotnet_lab2_cli.Migrations
                     b.Property<string>("Date")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<long>("Timestamp")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("TrackName")
                         .IsRequired()

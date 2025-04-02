@@ -98,6 +98,9 @@ namespace dotnet_lab2_cli.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<long>("Timestamp")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("TrackName")
                         .IsRequired()
                         .HasColumnType("longtext");
